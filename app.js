@@ -48,6 +48,11 @@ function logDebug(msg) {
         line.textContent = `> ${msg}`;
         line.className = "border-b border-zinc-800 py-1 font-mono text-zinc-400";
         debugEl.prepend(line);
+        
+        // Keep only the last 100 entries to prevent DOM bloat
+        while (debugEl.children.length > 100) {
+            debugEl.removeChild(debugEl.lastChild);
+        }
     }
 }
 
@@ -2104,6 +2109,7 @@ class DJMixer {
     }
 
     // --- YOUTUBE SEARCH ---
+    // (Consolidated to use scraping via main process)
 
     /**
      * Random Discovery: Pick a random term, search, and pick a random result.
@@ -2143,66 +2149,6 @@ class DJMixer {
         }
     }
 
-    /**
-     * Search YouTube with caching
-     * @param {string} query - Search query
-     * @returns {Array} Search results
-     */
-    async searchYouTube(query) {
-        if (!query || query.trim().length < 2) return [];
-
-        query = query.trim();
-        logDebug(`Searching YouTube for: ${query}`);
-
-        // Check cache first
-        const cached = this.getFromSearchCache(query);
-        if (cached) {
-            logDebug(`Using cached results for: ${query}`);
-            return cached;
-        }
-
-        try {
-            const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&maxResults=10&q=${encodeURIComponent(query)}&key=${YOUTUBE_API_KEY}`;
-
-            const response = await fetch(url);
-
-            if (!response.ok) {
-                if (response.status === 403) {
-                    showToast("Quota YouTube dépassé. Utilisez un lien direct.", 'error');
-                    logDebug("YouTube API quota exceeded");
-                    return [];
-                }
-                throw new Error(`API Error: ${response.status}`);
-            }
-
-            const data = await response.json();
-
-            if (!data.items || data.items.length === 0) {
-                logDebug("No results found");
-                return [];
-            }
-
-            // Transform results
-            const results = data.items.map(item => ({
-                id: item.id.videoId,
-                title: item.snippet.title,
-                channel: item.snippet.channelTitle,
-                thumbnail: item.snippet.thumbnails.medium.url,
-                publishedAt: item.snippet.publishedAt
-            }));
-
-            // Save to cache
-            this.saveToSearchCache(query, results);
-
-            logDebug(`Found ${results.length} results`);
-            return results;
-
-        } catch (e) {
-            logDebug(`Search error: ${e.message}`);
-            showToast("Erreur de recherche", 'error');
-            return [];
-        }
-    }
 
     /**
      * Get results from cache
@@ -2982,7 +2928,6 @@ class DJMixer {
         this.scrParticles = [];
         this.scrFireworks = [];
         this.scrRain = [];
-        this.scrRobots = [];
         this.scrImages = this.scrImages || [];
         this.scrCurrentImageIndex = 0;
         this.scrLastImageSwap = 0;
@@ -3023,9 +2968,6 @@ class DJMixer {
             { x: 0.2, y: 0.3, color: 'rgba(255, 0, 255, 0.1)', pulse: 0 },
             { x: 0.8, y: 0.7, color: 'rgba(0, 255, 255, 0.1)', pulse: 0 }
         ];
-
-        // Robots Mode Removed
-        this.scrRobots = [];
 
         this.animateScreenSaver();
     }
@@ -3797,8 +3739,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const queueSearchInput = document.getElementById('queueSearchInput');
     if (queueSearchInput) {
+        let queueSearchTimeout;
         queueSearchInput.addEventListener('input', () => {
-            mixer.renderQueue();
+            if (queueSearchTimeout) clearTimeout(queueSearchTimeout);
+            queueSearchTimeout = setTimeout(() => {
+                mixer.renderQueue();
+            }, 300);
         });
     }
 
