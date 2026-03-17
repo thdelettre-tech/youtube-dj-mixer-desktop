@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube DJ Mixer</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <!-- Google Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Inter:wght@300;400;600&family=Press+Start+2P&display=swap"
+        rel="stylesheet">
+
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles_addon.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        dj: {
+                            dark: '#0f0f13',
+                            panel: 'var(--dj-panel)',
+                            accent: 'var(--dj-accent)',
+                            neon: 'var(--dj-neon)',
+                            warning: 'var(--dj-warning)'
+                        }
+                    },
+                    fontFamily: {
+                        display: ['Orbitron', 'sans-serif'],
+                        body: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="h-screen flex flex-col overflow-hidden">
+
+    <!-- HEADER -->
+    <header
+        class="h-auto min-h-16 xl:h-16 border-b border-zinc-800 bg-dj-panel flex flex-col xl:flex-row items-center justify-between px-4 md:px-6 z-50 py-2 xl:py-0 transition-all duration-300">
+
+        <!-- ROW 1 (Small Screens) / Left Section (Large Screens) -->
+        <div class="w-full xl:w-auto flex items-center justify-between xl:justify-start gap-4">
+            <div class="flex items-center gap-3 shrink-0">
+                <i class="ph-fill ph-disc text-2xl md:text-3xl text-dj-neon animate-spin-slow"></i>
+                <h1 class="text-xl md:text-2xl font-display font-bold tracking-wider pt-1">
+                    <span class="bg-dj-neon text-black px-2 py-0.5 rounded italic mr-1">YT-DJ</span>
+                    <span class="hidden sm:inline">MIXER</span>
+                </h1>
+            </div>
+
+            <!-- Controls Cluster (Moved here for better mobile grouping) -->
+            <div class="flex items-center gap-2 md:gap-4 ml-auto xl:hidden">
+                <button id="perfToggleBtnRowBlock" onclick="mixer.toggleTurboMode()"
+                    class="w-8 h-8 flex items-center justify-center bg-zinc-800 hover:bg-zinc-700 rounded-full transition-all border border-zinc-700"
+                    title="Mode Turbo (Haute/Basse Config)">
+                    <i id="perfIconMobile" class="ph-fill ph-lightning text-zinc-500"></i>
+                </button>
+                <button onclick="mixer.openProjector()"
+                    class="w-8 h-8 flex items-center justify-center bg-zinc-800 rounded-full border border-zinc-700">
+                    <i class="ph ph-projector-screen text-lg"></i>
+                </button>
+                <button onclick="mixer.closeApp()"
+                    class="w-8 h-8 flex items-center justify-center bg-zinc-800 hover:bg-red-600/20 border border-zinc-700 hover:border-red-500/50 rounded-full transition-all text-zinc-400 hover:text-red-500"
+                    title="Quitter">
+                    <i class="ph ph-x"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- ROW 2 (Small Screens) / Center Section (Large Screens) -->
+        <div class="w-full xl:flex-1 max-w-4xl xl:mx-6 flex items-center gap-2 mt-2 xl:mt-0">
+            <div class="flex-1 relative group">
+                <input type="text" id="searchInput" placeholder="Rechercher sur YouTube ou coller un lien..."
+                    class="w-full bg-zinc-900 border border-zinc-700 rounded-full py-2 px-10 text-sm focus:outline-none focus:border-dj-neon focus:ring-1 focus:ring-dj-neon transition-all">
+                <i class="ph ph-magnifying-glass absolute left-3 top-2.5 text-zinc-500"></i>
+                <button id="addToQueueBtn"
+                    class="absolute right-12 top-1 bg-zinc-800 hover:bg-zinc-700 text-[10px] md:text-xs px-2 md:px-3 py-1.5 rounded-full transition-colors"
+                    title="Ajouter le lien à la queue">
+                    Ajouter
+                </button>
+                <button id="discoverBtn" onclick="mixer.discoverRandom()"
+                    class="absolute right-1 top-1 w-9 h-8 bg-dj-accent/20 hover:bg-dj-accent/40 text-dj-accent border border-dj-accent/30 rounded-full flex items-center justify-center transition-all group"
+                    title="Découverte aléatoire">
+                    <i
+                        class="ph-fill ph-dice-five text-lg group-hover:rotate-180 transition-transform duration-500"></i>
+                </button>
+
+                <!-- Search Results Dropdown -->
+                <div id="searchResults"
+                    class="hidden absolute top-full mt-2 w-full bg-zinc-900 border border-zinc-700 rounded-lg max-h-96 overflow-y-auto z-50 shadow-2xl">
+                    <!-- Results will be injected here by JavaScript -->
+                </div>
+            </div>
+
+            <div class="flex gap-1 shrink-0">
+                <button id="searchModeVideos" onclick="mixer.setSearchMode('videos')" class="search-mode-btn active"
+                    title="Vidéos">
+                    <i class="ph-fill ph-video"></i>
+                    <span class="hidden sm:inline xl:hidden 2xl:inline">Vidéos</span>
+                </button>
+                <button id="searchModePlaylists" onclick="mixer.setSearchMode('playlists')" class="search-mode-btn"
+                    title="Playlists">
+                    <i class="ph-fill ph-playlist"></i>
+                    <span class="hidden sm:inline xl:hidden 2xl:inline">Playlists</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- RIGHT SECTION (Large Screens Only Desktop View) -->
+        <div class="hidden xl:flex items-center gap-4 text-sm text-zinc-400">
+            <!-- Audio Output Toggle -->
+            <button id="audioToggleBtn" onclick="mixer.toggleAudioOutput()"
+                class="bg-zinc-800 hover:bg-zinc-700 text-xs px-3 py-1.5 rounded-full transition-colors border border-zinc-700 flex items-center gap-2"
+                title="Sortie Audio">
+                <i id="audioIcon" class="ph-fill ph-speaker-high"></i>
+                <span id="audioLabel" class="hidden 2xl:inline">AUDIO: PC</span>
+            </button>
+
+            <!-- Theme Selector -->
+            <div class="flex items-center gap-2">
+                <select id="themeSelect" onchange="mixer.applyTheme(this.value)"
+                    class="bg-zinc-800 text-[10px] text-zinc-300 border border-zinc-700 rounded px-2 py-1 focus:outline-none focus:border-dj-neon transition-colors">
+                    <option value="neon">NEON</option>
+                    <option value="emerald">EMERALD</option>
+                    <option value="industrial">INDUSTRIAL</option>
+                    <option value="luxury">LUXURY</option>
+                    <option value="sunset">SUNSET</option>
+                    <option value="cream">CREAM</option>
+                    <option value="pink">PINK</option>
+                    <option value="bw">B&W</option>
+                    <option value="nitro">RETRO</option>
+                    <option value="pixel">8-BIT</option>
+                </select>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <button onclick="mixer.openProjector()" title="Ouvrir le Projecteur"
+                    class="bg-zinc-800 hover:bg-zinc-700 text-xs px-3 py-1.5 rounded-full transition-colors border border-zinc-700 flex items-center gap-2">
+                    <i class="ph ph-projector-screen"></i> <span class="hidden 2xl:inline">Projecteur</span>
+                </button>
+                <button id="zoomToggleBtn" onclick="mixer.toggleZoom()" title="Zoom/Recadrage Projecteur"
+                    class="bg-zinc-800 hover:bg-zinc-700 text-xs px-3 py-1.5 rounded-full transition-all border border-zinc-700 flex items-center gap-2">
+                    <i class="ph ph-frame-corners"></i> <span class="hidden 2xl:inline">Zoom</span>
+                </button>
+                <div class="flex items-center gap-1 bg-zinc-800 rounded-full border border-zinc-700 px-2 py-1">
+                    <button id="screenSaverBtn" onclick="mixer.toggleScreenSaver()"
+                        class="hover:text-dj-neon transition-colors flex items-center gap-1"
+                        title="Économiseur d'écran">
+                        <i class="ph ph-monitor-play"></i> SCR
+                    </button>
+                    <select id="screenSaverModeSelect" onchange="mixer.setScreenSaverMode(this.value)"
+                        class="bg-transparent text-[10px] text-zinc-400 focus:outline-none border-l border-zinc-700 ml-1 pl-1 cursor-pointer hover:text-white">
+                        <option value="matrix">Matrix</option>
+                        <option value="space">Espace</option>
+                        <option value="psychedelic">Pulsar</option>
+                        <option value="techno">Grid</option>
+                        <option value="fireworks">Feux</option>
+                        <option value="rain">Pluie</option>
+                        <option value="text">Texte</option>
+                        <option value="images">Images</option>
+                    </select>
+                    <div class="flex items-center gap-1 border-l border-zinc-700 ml-1 pl-1" title="Afficher la vignette de la vidéo">
+                        <input type="checkbox" id="scrSyncTitleToggle" onchange="mixer.setScreenSaverSyncVideo(this.checked)" 
+                               class="w-3 h-3 accent-dj-neon cursor-pointer">
+                        <span class="text-[9px] text-zinc-500 font-bold uppercase">Vignette</span>
+                    </div>
+                    <button onclick="mixer.openScrSettings()" class="hover:text-dj-neon transition-colors px-1"
+                        title="Réglages Screensaver">
+                        <i class="ph ph-sliders"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Turbo Settings -->
+            <button id="perfToggleBtn" onclick="mixer.toggleTurboMode()"
+                class="w-10 h-10 flex items-center justify-center bg-zinc-800 hover:bg-zinc-700 rounded-full transition-all border border-zinc-700"
+                title="Mode Turbo (Haute/Basse Config)">
+                <i id="perfIcon" class="ph-fill ph-lightning text-zinc-500"></i>
+            </button>
+
+            <!-- Close App -->
+            <button id="closeAppBtn" onclick="mixer.closeApp()"
+                class="w-10 h-10 flex items-center justify-center bg-zinc-800 hover:bg-red-600/20 border border-zinc-700 hover:border-red-500/50 rounded-full transition-all text-zinc-400 hover:text-red-500"
+                title="Quitter l'application">
+                <i class="ph ph-x text-lg"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
+    <!-- Debug Log Row (Optional/Subtle) -->
+    <div id="debugLog"
+        class="hidden 2xl:flex absolute top-1 right-20 flex-col h-6 w-48 overflow-y-auto text-[8px] items-start bg-black/30 p-1 font-mono scroll-hide z-0 opacity-50">
+        <div class="text-zinc-600">-- LOGS --</div>
+    </div>
+
+    <!-- Custom Modal -->
+    <div id="modal-overlay">
+        <div id="modal-box" class="rounded-xl flex flex-col gap-4">
+            <h3 id="modal-title" class="text-lg font-bold text-white">Confirmation</h3>
+            <p id="modal-msg" class="text-zinc-400 text-sm">Êtes-vous sûr ?</p>
+            <input type="text" id="modal-input"
+                class="hidden w-full bg-zinc-800 border border-zinc-700 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-dj-neon transition-all">
+            <div class="flex flex-col gap-2 mt-2" id="modal-buttons">
+                <!-- Buttons will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- SCREEN SAVER OVERLAY -->
+    <div id="screenSaverOverlay"
+        class="fixed inset-0 z-[1000] bg-black hidden flex-col items-center justify-center overflow-hidden">
+        <canvas id="screenSaverCanvas" class="absolute inset-0 w-full h-full"></canvas>
+
+        <!-- Mode Text Container -->
+        <div id="screenSaverTextContainer" class="z-10 pointer-events-none text-center px-10">
+            <h1 id="screenSaverText"
+                class="text-6xl md:text-9xl font-display font-black tracking-tighter uppercase blur-sm opacity-50 transition-all duration-500">
+                YT DJ MIXER</h1>
+        </div>
+
+        <!-- Mode Controls (Subtle bottom bar) -->
+        <div
+            class="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-3 bg-black/60 backdrop-blur-md px-6 py-4 rounded-3xl border border-white/10 opacity-0 hover:opacity-100 transition-opacity duration-300">
+
+            <div class="flex items-center gap-3">
+                <div class="flex items-center gap-1 border-r border-white/10 pr-4 mr-1">
+                    <button onclick="mixer.setScreenSaverMode('matrix')" class="scr-mode-btn" data-mode="matrix"
+                        title="Matrix">
+                        <i class="ph ph-hash"></i>
+                    </button>
+                    <button onclick="mixer.setScreenSaverMode('space')" class="scr-mode-btn" data-mode="space"
+                        title="Espace">
+                        <i class="ph ph-planet"></i>
+                    </button>
+                    <button onclick="mixer.setScreenSaverMode('psychedelic')" class="scr-mode-btn active"
+                        data-mode="psychedelic" title="Pulsar">
+                        <i class="ph ph-spiral"></i>
+                    </button>
+                    <button onclick="mixer.setScreenSaverMode('techno')" class="scr-mode-btn" data-mode="techno"
+                        title="Techno-Grid">
+                        <i class="ph ph-grid-four"></i>
+                    </button>
+                    <button onclick="mixer.setScreenSaverMode('fireworks')" class="scr-mode-btn" data-mode="fireworks"
+                        title="Feux d'artifice">
+                        <i class="ph ph-sparkle"></i>
+                    </button>
+                    <button onclick="mixer.setScreenSaverMode('rain')" class="scr-mode-btn" data-mode="rain"
+                        title="Pluie">
+                        <i class="ph ph-cloud-rain"></i>
+                    </button>
+                    <button onclick="mixer.setScreenSaverMode('text')" class="scr-mode-btn" data-mode="text"
+                        title="Texte">
+                        <i class="ph ph-text-t"></i>
+                    </button>
+                    <button onclick="mixer.setScreenSaverMode('images')" class="scr-mode-btn" data-mode="images"
+                        title="Images">
+                        <i class="ph ph-image"></i>
+                    </button>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button onclick="mixer.toggleScreenSaver()"
+                        class="w-8 h-8 flex items-center justify-center bg-red-600/20 hover:bg-red-600/40 text-red-500 rounded-full transition-all">
+                        <i class="ph ph-x-circle text-xl"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Customization Row (Contextual) -->
+            <div id="scrCustomControls"
+                class="flex items-center gap-3 pt-2 border-t border-white/5 w-full justify-center">
+                <!-- Text Inputs -->
+                <div id="scrTextControls" class="flex items-center gap-2">
+                    <input type="text" id="screenSaverInput" placeholder="Votre texte..."
+                        class="bg-white/5 border border-white/10 rounded px-3 py-1 text-xs text-white focus:outline-none focus:border-dj-neon w-32"
+                        oninput="mixer.setScreenSaverText(this.value)">
+
+                    <select onchange="mixer.setScreenSaverFont(this.value)"
+                        class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[10px] text-white focus:outline-none">
+                        <option value="Orbitron">Orbitron</option>
+                        <option value="Inter">Inter</option>
+                        <option value="Press Start 2P">Pixel</option>
+                        <option value="serif">Serif</option>
+                    </select>
+
+                    <input type="color" onchange="mixer.setScreenSaverColor(this.value)" value="#00f0ff"
+                        class="w-6 h-6 bg-transparent border-none cursor-pointer">
+
+                    <select onchange="mixer.setScreenSaverAnim(this.value)"
+                        class="bg-white/5 border border-white/10 rounded px-2 py-1 text-[10px] text-white focus:outline-none">
+                        <option value="marquee">Défilé</option>
+                        <option value="bounce">Rebond</option>
+                        <option value="pulse">Pulsation</option>
+                    </select>
+                </div>
+
+                <!-- Image Inputs -->
+                <div id="scrImageControls" class="hidden flex items-center gap-2">
+                    <button onclick="document.getElementById('scrImageInput').click()"
+                        class="bg-dj-neon/20 hover:bg-dj-neon/40 text-dj-neon border border-dj-neon/30 px-3 py-1 rounded text-[10px] font-bold transition-all">
+                        CHOISIR DES IMAGES
+                    </button>
+                    <input type="file" id="scrImageInput" multiple accept="image/*" class="hidden"
+                        onchange="mixer.handleScrImages(event)">
+                    <span id="scrImageCount" class="text-[10px] text-white/40 italic">0 images</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN CONSOLE -->
+    <main class="flex-1 flex gap-4 p-4 overflow-hidden relative">
+
+        <!-- DECK A -->
+        <section
+            class="flex-1 flex flex-col gap-4 deck-container bg-dj-panel rounded-xl p-4 border-l-4 border-l-dj-neon relative">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-dj-neon to-transparent opacity-50"></div>
+
+            <!-- Deck Info Display A (Replacement for Video) -->
+            <div id="deckInfoA"
+                class="aspect-video bg-zinc-900 rounded-lg overflow-hidden relative group border border-zinc-800 shadow-inner">
+                <!-- Dynamic Background Thumbnail -->
+                <div id="bgThumbA"
+                    class="absolute inset-0 bg-cover bg-center opacity-30 blur-sm scale-105 transition-all duration-700">
+                </div>
+
+                <!-- Glassmorphism Content Overlay -->
+                <div
+                    class="absolute inset-0 flex flex-col items-center justify-center p-6 bg-gradient-to-b from-black/40 via-transparent to-black/60">
+                    <!-- Status Icon -->
+                    <div id="statusIconA"
+                        class="mb-4 w-16 h-16 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center shadow-xl">
+                        <i class="ph-fill ph-disc-blue text-4xl text-dj-neon animate-pulse"></i>
+                    </div>
+
+                    <!-- Explicit Metadata (Much larger than before) -->
+                    <div class="text-center z-10 w-full px-4">
+                        <div id="displayArtistA"
+                            class="text-[10px] md:text-xs font-display font-black text-dj-neon/80 uppercase tracking-[0.3em] mb-1 truncate">
+                            AUCUN ARTISTE</div>
+                        <div id="displayTitleA"
+                            class="text-lg md:text-xl font-display font-black text-white uppercase tracking-tighter leading-tight line-clamp-2">
+                            PISTE NON CHARGÉE</div>
+                    </div>
+
+                    <!-- Live Indicator (Subtle bottom) -->
+                    <div id="liveIndicatorA"
+                        class="absolute bottom-4 flex items-center gap-2 opacity-0 transition-opacity duration-300">
+                        <div class="w-1.5 h-1.5 bg-dj-neon rounded-full shadow-[0_0_8px_var(--dj-neon)]"></div>
+                        <span class="text-[8px] font-black tracking-widest text-dj-neon uppercase">LIVE CONTROL</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Controls A -->
+            <div class="flex-1 flex flex-col justify-between gap-2">
+                <!-- Waveform / Time -->
+                <div
+                    class="bg-zinc-900 rounded mb-2 flex flex-col items-center justify-center relative overflow-hidden group">
+                    <div class="w-full h-12 flex items-center justify-center relative">
+                        <div class="absolute inset-0 flex items-center justify-center opacity-20">
+                            <!-- Fake waveform visuals -->
+                            <div class="flex items-end gap-[2px] h-full w-full px-2" id="waveformA">
+                                <!-- JS will populate bars -->
+                            </div>
+                        </div>
+                        <div class="z-10 font-mono text-xl text-dj-neon" id="timeA">--:--</div>
+
+                        <!-- MONITOR OFF OVERLAY A -->
+                        <div id="monitorOverlayA"
+                            class="absolute inset-0 bg-black/90 flex flex-col items-center justify-center z-50 hidden text-center p-2">
+                            <div class="text-[10px] text-dj-neon font-bold">ON AIR (PROJ)</div>
+                            <div id="monitorDataA" class="text-xs text-white truncate w-full"></div>
+                        </div>
+                    </div>
+
+                    <!-- SEEK BAR A -->
+                    <input type="range" id="seekA" min="0" max="1000" value="0" step="0.01"
+                        class="w-full h-2 bg-zinc-800 appearance-none cursor-pointer accent-dj-neon hover:h-3 transition-all"
+                        oninput="mixer.seek('A', this.value)">
+                </div>
+
+                <!-- Transport -->
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <!-- Speed/Pitch -->
+                        <div class="flex flex-col items-center gap-1">
+                            <span class="text-[10px] text-zinc-500">SPEED</span>
+                            <input type="range" min="0.5" max="1.5" step="0.05" value="1"
+                                oninput="mixer.setSpeed('A', this.value)" class="w-24 accent-dj-neon h-1">
+                        </div>
+                    </div>
+                </div>
+        </section>
+
+
+        <!-- MIXER (CENTER) -->
+        <section
+            class="w-1/4 min-w-[180px] max-w-sm flex flex-col gap-4 bg-zinc-900/50 rounded-xl p-4 border border-zinc-800">
+
+            <!-- Gain / EQ -->
+            <div class="flex justify-between h-1/3">
+                <div class="flex flex-col items-center h-full">
+                    <div class="text-[10px] text-zinc-500 mb-2">VOL A</div>
+                    <input type="range" class="vol-slider accent-dj-neon" min="0" max="100" value="100"
+                        oninput="mixer.setVolume('A', this.value)">
+                </div>
+                <!-- MASTER MULTICOLORED WAVEFORMS -->
+                <div class="flex-1 px-4 flex flex-col items-center justify-center gap-1">
+                    <div id="masterVisualizer" class="multi-waveform-container">
+                        <div class="waveform-bar" style="--bar-color: #00f0ff;"></div>
+                        <div class="waveform-bar" style="--bar-color: #00ff88;"></div>
+                        <div class="waveform-bar" style="--bar-color: #ffcc00;"></div>
+                        <div class="waveform-bar" style="--bar-color: #ff3300;"></div>
+                        <div class="waveform-bar" style="--bar-color: #ff00ff;"></div>
+                        <div class="waveform-bar" style="--bar-color: #0088ff;"></div>
+                        <div class="waveform-bar" style="--bar-color: #00ffcc;"></div>
+                        <div class="waveform-bar" style="--bar-color: #ffaa00;"></div>
+                    </div>
+                </div>
+                <div class="flex flex-col items-center h-full">
+                    <div class="text-[10px] text-zinc-500 mb-2">VOL B</div>
+                    <input type="range" class="vol-slider accent-dj-warning" min="0" max="100" value="100"
+                        oninput="mixer.setVolume('B', this.value)">
+                </div>
+            </div>
+
+            <!-- Master Params Removed From Here (Moved to Center Console) -->
+
+            <!-- Deck Toggle Switch -->
+            <div class="mt-auto mb-4 px-4">
+                <div class="deck-switch-container">
+                    <button id="btnSwitchA" onclick="mixer.switchDeck('A')" class="deck-switch-btn active"
+                        data-deck="A">
+                        DECK A
+                    </button>
+                    <button id="btnSwitchB" onclick="mixer.switchDeck('B')" class="deck-switch-btn" data-deck="B">
+                        DECK B
+                    </button>
+                    <div id="deckSwitchSlider" class="deck-switch-slider"></div>
+                </div>
+
+                <!-- NEW BACKLIT MASTER CONTROLS -->
+                <div class="flex flex-col gap-2 mt-4 px-2">
+                    <div class="flex justify-between items-center gap-2">
+                        <!-- Fader Start Button -->
+                        <button id="btnFaderStart" onclick="mixer.toggleFaderStart()"
+                            class="master-ctrl-btn active flex-1" title="Fader Start">
+                            <i class="ph-fill ph-play-circle text-lg"></i>
+                            <span class="text-[8px] font-bold uppercase block mt-1">Fader Start</span>
+                        </button>
+
+                        <!-- Auto Next Button -->
+                        <button id="btnAutoNext" onclick="mixer.toggleAutoPlay()" class="master-ctrl-btn flex-1"
+                            title="Auto Next">
+                            <i class="ph-fill ph-skip-forward-circle text-lg"></i>
+                            <span class="text-[8px] font-bold uppercase block mt-1">Auto Next</span>
+                        </button>
+
+                        <!-- Shuffle Button -->
+                        <button id="btnShuffle" onclick="mixer.toggleShuffle()" class="master-ctrl-btn flex-1"
+                            title="Shuffle">
+                            <i class="ph-fill ph-shuffle text-lg"></i>
+                            <span class="text-[8px] font-bold uppercase block mt-1">Shuffle</span>
+                        </button>
+
+                        <!-- Smart Chaining (SponsorBlock) -->
+                        <button id="btnSmartChaining" onclick="mixer.toggleSmartChaining()"
+                            class="master-ctrl-btn active flex-1" title="Enchaînement Intelligent (SponsorBlock)">
+                            <i class="ph-fill ph-brain text-lg"></i>
+                            <span class="text-[8px] font-bold uppercase block mt-1">Smart</span>
+                        </button>
+                    </div>
+
+                    <!-- Global Transport (New Central Controls) -->
+                    <div class="flex flex-col gap-2 mt-4 pt-4 border-t border-zinc-800/50">
+                        <div class="flex gap-2">
+                            <button id="globalPlayBtn" onclick="mixer.globalPlay()"
+                                class="flex-1 bg-dj-neon hover:bg-cyan-400 text-black font-black py-3 px-4 rounded-xl flex items-center justify-center gap-3 transition-all active:scale-95 shadow-[0_0_15px_rgba(0,240,255,0.3)]">
+                                <i class="ph-fill ph-play text-2xl"></i>
+                                <span class="tracking-tighter">PLAY</span>
+                            </button>
+                            <button id="globalStopBtn" onclick="mixer.globalStop()"
+                                class="flex-1 bg-zinc-800 hover:bg-red-600/20 border border-zinc-700 hover:border-red-500/50 text-zinc-400 hover:text-red-500 font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-3 transition-all active:scale-95">
+                                <i class="ph-fill ph-stop text-2xl"></i>
+                                <span class="tracking-tighter uppercase">Stop</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-[10px] text-zinc-500 mt-2 text-center font-bold tracking-widest uppercase opacity-50">
+                    Console de Contrôle
+                </div>
+            </div>
+        </section>
+
+
+        <!-- DECK B -->
+        <section
+            class="flex-1 flex flex-col gap-4 deck-container bg-dj-panel rounded-xl p-4 border-l-4 border-l-dj-warning relative">
+            <div class="absolute top-0 right-0 w-full h-1 bg-gradient-to-l from-dj-warning to-transparent opacity-50">
+            </div>
+
+            <!-- Deck Info Display B (Replacement for Video) -->
+            <div id="deckInfoB"
+                class="aspect-video bg-zinc-900 rounded-lg overflow-hidden relative group border border-zinc-800 shadow-inner">
+                <!-- Dynamic Background Thumbnail -->
+                <div id="bgThumbB"
+                    class="absolute inset-0 bg-cover bg-center opacity-30 blur-sm scale-105 transition-all duration-700">
+                </div>
+
+                <!-- Glassmorphism Content Overlay -->
+                <div
+                    class="absolute inset-0 flex flex-col items-center justify-center p-6 bg-gradient-to-b from-black/40 via-transparent to-black/60">
+                    <!-- Status Icon -->
+                    <div id="statusIconB"
+                        class="mb-4 w-16 h-16 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center shadow-xl">
+                        <i class="ph-fill ph-disc-blue text-4xl text-dj-warning animate-pulse"></i>
+                    </div>
+
+                    <!-- Explicit Metadata -->
+                    <div class="text-center z-10 w-full px-4">
+                        <div id="displayArtistB"
+                            class="text-[10px] md:text-xs font-display font-black text-dj-warning/80 uppercase tracking-[0.3em] mb-1 truncate">
+                            AUCUN ARTISTE</div>
+                        <div id="displayTitleB"
+                            class="text-lg md:text-xl font-display font-black text-white uppercase tracking-tighter leading-tight line-clamp-2">
+                            PISTE NON CHARGÉE</div>
+                    </div>
+
+                    <!-- Live Indicator -->
+                    <div id="liveIndicatorB"
+                        class="absolute bottom-4 flex items-center gap-2 opacity-0 transition-opacity duration-300">
+                        <div class="w-1.5 h-1.5 bg-dj-warning rounded-full shadow-[0_0_8px_var(--dj-warning)]"></div>
+                        <span class="text-[8px] font-black tracking-widest text-dj-warning uppercase">LIVE
+                            CONTROL</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Controls B -->
+            <div class="flex-1 flex flex-col justify-between gap-2">
+                <!-- Waveform / Time -->
+                <div
+                    class="bg-zinc-900 rounded mb-2 flex flex-col items-center justify-center relative overflow-hidden group">
+                    <div class="w-full h-12 flex items-center justify-center relative">
+                        <div
+                            class="absolute inset-0 flex items-center justify-center opacity-20 transform scale-x-[-1]">
+                            <!-- Fake waveform visuals mirrored -->
+                            <div class="flex items-end gap-[2px] h-full w-full px-2" id="waveformB"></div>
+                        </div>
+                        <div class="z-10 font-mono text-xl text-dj-warning" id="timeB">--:--</div>
+
+                        <!-- MONITOR OFF OVERLAY B -->
+                        <div id="monitorOverlayB"
+                            class="absolute inset-0 bg-black/90 flex flex-col items-center justify-center z-50 hidden text-center p-2">
+                            <div class="text-[10px] text-dj-warning font-bold">ON AIR (PROJ)</div>
+                            <div id="monitorDataB" class="text-xs text-white truncate w-full"></div>
+                        </div>
+                    </div>
+
+                    <!-- SEEK BAR B -->
+                    <input type="range" id="seekB" min="0" max="1000" value="0" step="0.01"
+                        class="w-full h-2 bg-zinc-800 appearance-none cursor-pointer accent-dj-warning hover:h-3 transition-all"
+                        oninput="mixer.seek('B', this.value)">
+                </div>
+
+                <div class="flex items-center justify-between flex-row-reverse">
+                    <div class="flex items-center gap-3">
+                        <!-- Speed/Pitch -->
+                        <div class="flex flex-col items-center gap-1">
+                            <span class="text-[10px] text-zinc-500">SPEED</span>
+                            <input type="range" min="0.5" max="1.5" step="0.05" value="1"
+                                oninput="mixer.setSpeed('B', this.value)" class="w-24 accent-dj-warning h-1">
+                        </div>
+                    </div>
+                </div>
+        </section>
+    </main>
+
+    <!-- QUEUE / LIBRARY DRAWER -->
+    <section id="queueSection" class="bg-zinc-900 border-t border-zinc-800 flex flex-col"
+        style="height: 220px; min-height: 100px; max-height: 60vh;">
+        <!-- RESIZE HANDLE -->
+        <div id="queueResizeHandle"
+            class="w-full h-2 cursor-ns-resize flex items-center justify-center hover:bg-zinc-700/50 transition-colors group shrink-0">
+            <div class="w-12 h-1 rounded-full bg-zinc-700 group-hover:bg-zinc-500 transition-colors"></div>
+        </div>
+
+        <div
+            class="px-6 py-2 border-b border-zinc-800 flex flex-wrap justify-between items-center bg-zinc-900/50 shrink-0 gap-2">
+            <div class="flex items-center gap-4">
+                <button id="libModeQueue" class="lib-mode-btn active">
+                    FILE D'ATTENTE
+                </button>
+            </div>
+
+            <!-- QUEUE TABS -->
+            <div class="flex overflow-x-auto scroll-hide p-1 gap-1 flex-1 min-w-[100px]" id="queueTabs">
+                <!-- Tabs will be injected via JS -->
+            </div>
+
+            <!-- Library Controls -->
+            <div class="flex items-center gap-2 flex-wrap justify-end">
+                <span id="queueCount" class="text-[10px] text-zinc-500 font-mono mr-2 hidden sm:inline">0 TITRES</span>
+
+                <!-- Playlist Controls -->
+                <button
+                    class="text-xs bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 px-2 py-1 rounded text-zinc-300 flex items-center gap-1"
+                    onclick="mixer.exportQueue()" title="Exporter la file d'attente actuelle">
+                    <i class="ph ph-download"></i> Enregistrer
+                </button>
+                <button
+                    class="text-xs bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 px-2 py-1 rounded text-zinc-300 flex items-center gap-1"
+                    onclick="mixer.importQueue()" title="Ouvrir une liste (.json)">
+                    <i class="ph ph-upload"></i> Ouvrir
+                </button>
+                <input type="file" id="importFile" class="hidden" accept=".json" onchange="mixer.handleImport(event)">
+
+                <div class="h-4 w-[1px] bg-zinc-700 mx-2"></div>
+
+                <div class="relative group mr-2">
+                    <input type="text" id="queueSearchInput" placeholder="Filtrer la file..."
+                        class="bg-zinc-900 border border-zinc-700 rounded-full py-1 px-8 text-xs focus:outline-none focus:border-dj-neon focus:ring-1 focus:ring-dj-neon transition-all w-32 focus:w-48 text-zinc-300">
+                    <i class="ph ph-magnifying-glass absolute left-2.5 top-1.5 text-zinc-500"></i>
+                </div>
+
+                <button class="text-xs text-zinc-500 hover:text-white font-bold" onclick="mixer.clearQueue()">TOUT
+                    VIDER</button>
+            </div>
+        </div>
+
+        <!-- Library Content -->
+        <div class="flex-1 overflow-auto p-4 relative">
+            <!-- Queue List (Wrapping grid for scroll) -->
+            <div id="queueList" class="flex flex-wrap gap-3 items-start content-start">
+                <!-- Tracks will be injected via JS -->
+            </div>
+        </div>
+    </section>
+
+    <!-- SCREEN SAVER SETTINGS MODAL -->
+    <div id="scrSettingsModal"
+        class="fixed inset-0 z-[2000] bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-zinc-900 border border-zinc-700 rounded-3xl w-full max-w-md p-6 shadow-2xl">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-display font-bold text-dj-neon flex items-center gap-2">
+                    <i class="ph ph-monitor-play"></i> RÉGLAGES SCREENSAVER
+                </h3>
+                <button onclick="mixer.closeScrSettings()" class="text-zinc-500 hover:text-white transition-colors">
+                    <i class="ph ph-x-circle text-2xl"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <!-- Text Settings -->
+                <div class="p-4 bg-zinc-800/50 rounded-2xl border border-zinc-700">
+                    <label class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest block mb-2">Mode
+                        Texte</label>
+                    <div class="flex flex-col gap-3">
+                        <input type="text" id="modalScrInput" placeholder="Votre texte..."
+                            class="w-full bg-zinc-900 border border-zinc-700 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-dj-neon"
+                            oninput="mixer.setScreenSaverText(this.value)">
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <select onchange="mixer.setScreenSaverFont(this.value)" id="modalScrFont"
+                                class="bg-zinc-900 border border-zinc-700 rounded-lg py-2 px-3 text-xs text-white focus:outline-none">
+                                <option value="Orbitron">Orbitron</option>
+                                <option value="Inter">Inter</option>
+                                <option value="Press Start 2P">Pixel</option>
+                                <option value="serif">Serif</option>
+                            </select>
+
+                            <select onchange="mixer.setScreenSaverAnim(this.value)" id="modalScrAnim"
+                                class="bg-zinc-900 border border-zinc-700 rounded-lg py-2 px-3 text-xs text-white focus:outline-none">
+                                <option value="marquee">Défilé</option>
+                                <option value="bounce">Rebond</option>
+                                <option value="pulse">Pulsation</option>
+                            </select>
+                        </div>
+
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs text-zinc-400">Couleur du texte</span>
+                            <div class="flex items-center gap-2">
+                                <span id="modalScrColorHex" class="text-[10px] text-zinc-500 font-mono">#00f0ff</span>
+                                <input type="color" onchange="mixer.setScreenSaverColor(this.value)" id="modalScrColor"
+                                    value="#00f0ff" class="w-10 h-8 bg-transparent border-none cursor-pointer">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Image Settings -->
+                <div class="p-4 bg-zinc-800/50 rounded-2xl border border-zinc-700">
+                    <label class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest block mb-2">Mode
+                        Images</label>
+                    <div class="flex items-center justify-between">
+                        <button onclick="document.getElementById('modalScrImageInput').click()"
+                            class="flex-1 bg-dj-neon/10 hover:bg-dj-neon/20 text-dj-neon border border-dj-neon/20 py-2 rounded-lg text-xs font-bold transition-all">
+                            SÉLECTIONNER DES IMAGES
+                        </button>
+                        <input type="file" id="modalScrImageInput" multiple accept="image/*" class="hidden"
+                            onchange="mixer.handleScrImages(event)">
+                        <span id="modalScrImageCount" class="ml-4 text-[10px] text-zinc-500 italic">0 images</span>
+                    </div>
+                </div>
+
+                <!-- Global Animation Speed -->
+                <div class="p-4 bg-zinc-800/50 rounded-2xl border border-zinc-700">
+                    <label class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest block mb-2">Vitesse
+                        Globale</label>
+                    <div class="flex items-center gap-4">
+                        <i class="ph ph-timer text-zinc-500"></i>
+                        <input type="range" id="modalScrSpeed" min="0.5" max="3" step="0.1" value="1"
+                            class="flex-1 accent-dj-neon h-1.5" oninput="mixer.setScreenSaverSpeed(this.value)">
+                        <span id="modalScrSpeedVal" class="text-[10px] text-zinc-400 font-mono w-8">1.0x</span>
+                    </div>
+                </div>
+
+                <!-- Sync Title Setting -->
+                <div class="p-4 bg-zinc-800/50 rounded-2xl border border-zinc-700 flex items-center justify-between">
+                    <div>
+                        <label class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest block">Affichage dynamique</label>
+                        <span class="text-[9px] text-zinc-400">Afficher la vignette (image) de la vidéo</span>
+                    </div>
+                    <input type="checkbox" id="modalScrSyncTitle" onchange="mixer.setScreenSaverSyncVideo(this.checked)" 
+                           class="w-5 h-5 accent-dj-neon cursor-pointer">
+                </div>
+            </div>
+
+            <button onclick="mixer.closeScrSettings()"
+                class="w-full mt-6 bg-dj-neon text-black font-bold py-3 rounded-xl hover:scale-[1.02] transition-transform active:scale-95">
+                TERMINÉ
+            </button>
+        </div>
+    </div>
+
+    <!-- Hidden Controller Players (To avoid rendering overhead in main window) -->
+    <div id="hiddenPlayers" class="fixed -bottom-[1000px] -right-[1000px] opacity-0 pointer-events-none overflow-hidden"
+        style="width: 200px; height: 100px;">
+        <div id="playerA"></div>
+        <div id="playerB"></div>
+    </div>
+
+    <!-- Application JavaScript -->
+    <script src="library.js"></script>
+    <script src="app.js"></script>
+
+</body>
+
+</html>
