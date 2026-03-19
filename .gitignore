@@ -1,4 +1,4 @@
 node_modules/
-dist/
+# dist/ (Removed to allow executable in repo)
 .DS_Store
 *.log

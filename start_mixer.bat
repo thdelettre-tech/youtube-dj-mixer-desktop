@@ -1,4 +1,4 @@
 @echo off
 echo Starting YouTube DJ Mixer...
-npm start
+start "" "dist\win-unpacked\YouTube DJ Mixer.exe"
 pause

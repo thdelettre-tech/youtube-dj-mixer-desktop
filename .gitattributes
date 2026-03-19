@@ -1,0 +1,5 @@
+dist/**/*.exe filter=lfs diff=lfs merge=lfs -text
+dist/**/*.dll filter=lfs diff=lfs merge=lfs -text
+dist/**/*.pak filter=lfs diff=lfs merge=lfs -text
+dist/**/*.dat filter=lfs diff=lfs merge=lfs -text
+dist/**/*.bin filter=lfs diff=lfs merge=lfs -text
