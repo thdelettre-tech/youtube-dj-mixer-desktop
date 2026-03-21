@@ -6,11 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>YouTube DJ Mixer</title>
 
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- Phosphor Icons -->
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Tailwind CSS (Local for offline support) -->
+    <script src="tailwind-cdn.js"></script>
+    
+    <!-- Phosphor Icons (Local for offline support) -->
+    <script src="phosphor-icons.js"></script>
 
     <!-- Google Fonts -->
     <link
@@ -47,10 +47,10 @@
 
     <!-- HEADER -->
     <header
-        class="h-auto min-h-16 xl:h-16 border-b border-zinc-800 bg-dj-panel flex flex-col xl:flex-row items-center justify-between px-4 md:px-6 z-50 py-2 xl:py-0 transition-all duration-300">
+        class="h-auto min-h-16 lg:h-16 border-b border-zinc-800 bg-dj-panel flex flex-col lg:flex-row items-center justify-between px-4 md:px-6 z-50 py-2 lg:py-0 transition-all duration-300">
 
         <!-- ROW 1 (Small Screens) / Left Section (Large Screens) -->
-        <div class="w-full xl:w-auto flex items-center justify-between xl:justify-start gap-4">
+        <div class="w-full lg:w-auto flex items-center justify-between lg:justify-start gap-4">
             <div class="flex items-center gap-3 shrink-0">
                 <i class="ph-fill ph-disc text-2xl md:text-3xl text-dj-neon animate-spin-slow"></i>
                 <h1 class="text-xl md:text-2xl font-display font-bold tracking-wider pt-1">
@@ -60,7 +60,7 @@
             </div>
 
             <!-- Controls Cluster (Moved here for better mobile grouping) -->
-            <div class="flex items-center gap-2 md:gap-4 ml-auto xl:hidden">
+            <div class="flex items-center gap-2 md:gap-4 ml-auto lg:hidden">
                 <button id="perfToggleBtnRowBlock" onclick="mixer.toggleTurboMode()"
                     class="w-8 h-8 flex items-center justify-center bg-zinc-800 hover:bg-zinc-700 rounded-full transition-all border border-zinc-700"
                     title="Mode Turbo (Haute/Basse Config)">
@@ -79,7 +79,7 @@
         </div>
 
         <!-- ROW 2 (Small Screens) / Center Section (Large Screens) -->
-        <div class="w-full xl:flex-1 max-w-4xl xl:mx-6 flex items-center gap-2 mt-2 xl:mt-0">
+        <div class="w-full lg:flex-1 max-w-4xl lg:mx-6 flex items-center gap-2 mt-2 lg:mt-0">
             <div class="flex-1 relative group">
                 <input type="text" id="searchInput" placeholder="Rechercher sur YouTube ou coller un lien..."
                     class="w-full bg-zinc-900 border border-zinc-700 rounded-full py-2 px-10 text-sm focus:outline-none focus:border-dj-neon focus:ring-1 focus:ring-dj-neon transition-all">
@@ -107,24 +107,24 @@
                 <button id="searchModeVideos" onclick="mixer.setSearchMode('videos')" class="search-mode-btn active"
                     title="Vidéos">
                     <i class="ph-fill ph-video"></i>
-                    <span class="hidden sm:inline xl:hidden 2xl:inline">Vidéos</span>
+                    <span class="hidden sm:inline lg:hidden xl:inline">Vidéos</span>
                 </button>
                 <button id="searchModePlaylists" onclick="mixer.setSearchMode('playlists')" class="search-mode-btn"
                     title="Playlists">
                     <i class="ph-fill ph-playlist"></i>
-                    <span class="hidden sm:inline xl:hidden 2xl:inline">Playlists</span>
+                    <span class="hidden sm:inline lg:hidden xl:inline">Playlists</span>
                 </button>
             </div>
         </div>
 
         <!-- RIGHT SECTION (Large Screens Only Desktop View) -->
-        <div class="hidden xl:flex items-center gap-4 text-sm text-zinc-400">
+        <div class="hidden lg:flex items-center gap-4 text-sm text-zinc-400">
             <!-- Audio Output Toggle -->
             <button id="audioToggleBtn" onclick="mixer.toggleAudioOutput()"
                 class="bg-zinc-800 hover:bg-zinc-700 text-xs px-3 py-1.5 rounded-full transition-colors border border-zinc-700 flex items-center gap-2"
                 title="Sortie Audio">
                 <i id="audioIcon" class="ph-fill ph-speaker-high"></i>
-                <span id="audioLabel" class="hidden 2xl:inline">AUDIO: PC</span>
+                <span id="audioLabel" class="hidden xl:inline">AUDIO: PC</span>
             </button>
 
             <!-- Theme Selector -->
@@ -147,11 +147,11 @@
             <div class="flex items-center gap-2">
                 <button onclick="mixer.openProjector()" title="Ouvrir le Projecteur"
                     class="bg-zinc-800 hover:bg-zinc-700 text-xs px-3 py-1.5 rounded-full transition-colors border border-zinc-700 flex items-center gap-2">
-                    <i class="ph ph-projector-screen"></i> <span class="hidden 2xl:inline">Projecteur</span>
+                    <i class="ph ph-projector-screen"></i> <span class="hidden xl:inline">Projecteur</span>
                 </button>
                 <button id="zoomToggleBtn" onclick="mixer.toggleZoom()" title="Zoom/Recadrage Projecteur"
                     class="bg-zinc-800 hover:bg-zinc-700 text-xs px-3 py-1.5 rounded-full transition-all border border-zinc-700 flex items-center gap-2">
-                    <i class="ph ph-frame-corners"></i> <span class="hidden 2xl:inline">Zoom</span>
+                    <i class="ph ph-frame-corners"></i> <span class="hidden xl:inline">Zoom</span>
                 </button>
                 <div class="flex items-center gap-1 bg-zinc-800 rounded-full border border-zinc-700 px-2 py-1">
                     <button id="screenSaverBtn" onclick="mixer.toggleScreenSaver()"
@@ -203,7 +203,7 @@
 
     <!-- Debug Log Row (Optional/Subtle) -->
     <div id="debugLog"
-        class="hidden 2xl:flex absolute top-1 right-20 flex-col h-6 w-48 overflow-y-auto text-[8px] items-start bg-black/30 p-1 font-mono scroll-hide z-0 opacity-50">
+        class="hidden xl:flex absolute top-1 right-20 flex-col h-6 w-48 overflow-y-auto text-[8px] items-start bg-black/30 p-1 font-mono scroll-hide z-0 opacity-50">
         <div class="text-zinc-600">-- LOGS --</div>
     </div>
 

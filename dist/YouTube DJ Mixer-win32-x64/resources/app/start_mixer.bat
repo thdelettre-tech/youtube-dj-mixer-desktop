@@ -1,6 +1,4 @@
 @echo off
-echo Démarrage du NEOMIXER (Electron)...
-set "ELECTRON_RUN_AS_NODE="
-cd /d "%~dp0"
-call npm start
+echo Starting YouTube DJ Mixer...
+start "" "dist\YouTube DJ Mixer-win32-x64\YouTube DJ Mixer.exe"
 pause
